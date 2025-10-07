@@ -1,1 +1,358 @@
+// main.dart
+import 'package:flutter/material.dart';
 
+void main() {
+  runApp(ITQuizApp());
+}
+
+class ITQuizApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'IT Quiz',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+  fontFamily: "Roboto",
+  brightness: Brightness.light,
+  primarySwatch: Colors.indigo,
+  scaffoldBackgroundColor: Color(0xFFF5F7FB),
+  appBarTheme: AppBarTheme(
+    elevation: 0,
+    centerTitle: true,
+    backgroundColor: Colors.indigo,
+    titleTextStyle: TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+    ),
+  ),
+  cardTheme: CardThemeData(   // <-- FIXED
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(18),
+    ),
+    elevation: 4,
+    margin: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+  ),
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.indigo,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      padding: EdgeInsets.symmetric(vertical: 14),
+      textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    ),
+  ),
+),
+
+      home: HomePage(),
+    );
+  }
+}
+
+/// ------------------ Models -------------------
+class Question {
+  final String subject;
+  final String text;
+  final List<String> options;
+  final int correctIndex;
+
+  Question({
+    required this.subject,
+    required this.text,
+    required this.options,
+    required this.correctIndex,
+  });
+}
+
+/// ------------------ Sample Data -------------------
+final List<Question> sampleQuestions = [
+  Question(subject: 'Networking', text: 'Which protocol is used to send email between mail servers?', options: ['FTP', 'SMTP', 'HTTP', 'SSH'], correctIndex: 1),
+  Question(subject: 'DBMS', text: 'Which key uniquely identifies a record in a table?', options: ['Primary Key', 'Foreign Key', 'Candidate Key', 'Super Key'], correctIndex: 0),
+  Question(subject: 'Operating Systems', text: 'Which memory is volatile?', options: ['ROM', 'Cache', 'RAM', 'Hard Disk'], correctIndex: 2),
+  Question(subject: 'Programming', text: 'Which operator is used to compare equality in Dart?', options: ['=', '==', '!=', '==='], correctIndex: 1),
+];
+
+/// ------------------ Home Page -------------------
+class HomePage extends StatelessWidget {
+  List<String> getSubjects() {
+    return sampleQuestions.map((q) => q.subject).toSet().toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final subjects = getSubjects();
+
+    return Scaffold(
+      appBar: AppBar(title: Text("Subject-wise IT Quiz")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Choose a Subject",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: subjects.length,
+                itemBuilder: (context, index) {
+                  final subject = subjects[index];
+                  final count = sampleQuestions.where((q) => q.subject == subject).length;
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => QuizPage(subject: subject)),
+                      );
+                    },
+                    child: Container(
+                      margin: EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.indigo.shade400, Colors.indigo.shade700],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 6,
+                            offset: Offset(2, 4),
+                          )
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+                        title: Text(
+                          subject,
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          "$count Questions",
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: 12),
+            Center(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  side: BorderSide(color: Colors.indigo, width: 2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: Icon(Icons.list, color: Colors.indigo),
+                label: Text("Review All Questions", style: TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => AllSubjectsReviewPage()),
+                  );
+                },
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ------------------ Quiz Page -------------------
+class QuizPage extends StatefulWidget {
+  final String subject;
+  QuizPage({required this.subject});
+
+  @override
+  _QuizPageState createState() => _QuizPageState();
+}
+
+class _QuizPageState extends State<QuizPage> {
+  late List<Question> questions;
+  int currentIndex = 0;
+  int score = 0;
+  int? selectedOptionIndex;
+  bool showAnswer = false;
+
+  @override
+  void initState() {
+    super.initState();
+    questions = sampleQuestions.where((q) => q.subject == widget.subject).toList();
+  }
+
+  void submitAnswer() {
+    if (selectedOptionIndex == null) return;
+    setState(() {
+      showAnswer = true;
+      if (selectedOptionIndex == questions[currentIndex].correctIndex) {
+        score++;
+      }
+    });
+  }
+
+  void nextQuestion() {
+    setState(() {
+      selectedOptionIndex = null;
+      showAnswer = false;
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ResultPage(score: score, total: questions.length, subject: widget.subject),
+          ),
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final q = questions[currentIndex];
+
+    return Scaffold(
+      appBar: AppBar(title: Text("${widget.subject} Quiz")),
+      body: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LinearProgressIndicator(
+              value: (currentIndex + 1) / questions.length,
+              backgroundColor: Colors.grey.shade300,
+              color: Colors.indigo,
+            ),
+            SizedBox(height: 20),
+            Text("Q${currentIndex + 1}/${questions.length}", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
+            Text(q.text, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+            SizedBox(height: 20),
+            ...List.generate(q.options.length, (i) {
+              final isCorrect = i == q.correctIndex;
+              final isSelected = selectedOptionIndex == i;
+              Color? color;
+
+              if (showAnswer) {
+                if (isCorrect) color = Colors.green.shade100;
+                else if (isSelected && !isCorrect) color = Colors.red.shade100;
+              }
+
+              return Card(
+                color: color,
+                child: RadioListTile<int>(
+                  value: i,
+                  groupValue: selectedOptionIndex,
+                  title: Text(q.options[i]),
+                  onChanged: showAnswer
+                      ? null
+                      : (val) {
+                          setState(() {
+                            selectedOptionIndex = val;
+                          });
+                        },
+                ),
+              );
+            }),
+            Spacer(),
+            ElevatedButton(
+              onPressed: showAnswer ? nextQuestion : submitAnswer,
+              child: Text(showAnswer ? (currentIndex == questions.length - 1 ? "Finish" : "Next") : "Submit"),
+            ),
+            SizedBox(height: 12),
+            Center(child: Text("Score: $score", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ------------------ Result Page -------------------
+class ResultPage extends StatelessWidget {
+  final int score;
+  final int total;
+  final String subject;
+
+  ResultPage({required this.score, required this.total, required this.subject});
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (score / total * 100).toStringAsFixed(0);
+
+    return Scaffold(
+      appBar: AppBar(title: Text("$subject - Result")),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            elevation: 6,
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Your Score", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 10),
+                  Text("$score / $total", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                  SizedBox(height: 8),
+                  Text("$percent%", style: TextStyle(fontSize: 18, color: Colors.grey[700])),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => QuizPage(subject: subject)));
+                    },
+                    child: Text("Retake Quiz"),
+                  ),
+                  SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => HomePage()), (r) => false);
+                    },
+                    child: Text("Back to Subjects"),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ------------------ Review Page -------------------
+class AllSubjectsReviewPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("All Questions")),
+      body: ListView.builder(
+        padding: EdgeInsets.all(12),
+        itemCount: sampleQuestions.length,
+        itemBuilder: (context, idx) {
+          final q = sampleQuestions[idx];
+          return Card(
+            child: ListTile(
+              title: Text(q.text, style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text(
+                "Subject: ${q.subject}\nOptions: ${q.options.join(', ')}\nAnswer: ${q.options[q.correctIndex]}",
+              ),
+              isThreeLine: true,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
