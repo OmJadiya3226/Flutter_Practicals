@@ -1,1 +1,157 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(ResumeMakerApp());
+}
+
+class ResumeMakerApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: "Resume Maker",
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: ResumeFormPage(),
+    );
+  }
+}
+
+class ResumeFormPage extends StatefulWidget {
+  @override
+  _ResumeFormPageState createState() => _ResumeFormPageState();
+}
+
+class _ResumeFormPageState extends State<ResumeFormPage> {
+  final _formKey = GlobalKey<FormState>();
+
+  String name = "";
+  String email = "";
+  String phone = "";
+  String education = "";
+  String skills = "";
+  String experience = "";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Resume Maker")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                decoration: InputDecoration(labelText: "Full Name"),
+                onSaved: (val) => name = val ?? "",
+                validator: (val) =>
+                    val!.isEmpty ? "Please enter your name" : null,
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: "Email"),
+                onSaved: (val) => email = val ?? "",
+                validator: (val) =>
+                    val!.isEmpty ? "Please enter your email" : null,
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: "Phone Number"),
+                onSaved: (val) => phone = val ?? "",
+                validator: (val) =>
+                    val!.isEmpty ? "Please enter your phone number" : null,
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: "Education"),
+                onSaved: (val) => education = val ?? "",
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: "Skills"),
+                onSaved: (val) => skills = val ?? "",
+              ),
+              TextFormField(
+                decoration: InputDecoration(labelText: "Experience"),
+                onSaved: (val) => experience = val ?? "",
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                child: Text("Generate Resume"),
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    _formKey.currentState!.save();
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ResumePreviewPage(
+                          name: name,
+                          email: email,
+                          phone: phone,
+                          education: education,
+                          skills: skills,
+                          experience: experience,
+                        ),
+                      ),
+                    );
+                  }
+                },
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ResumePreviewPage extends StatelessWidget {
+  final String name, email, phone, education, skills, experience;
+
+  ResumePreviewPage({
+    required this.name,
+    required this.email,
+    required this.phone,
+    required this.education,
+    required this.skills,
+    required this.experience,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Resume Preview")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Card(
+          elevation: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ListView(
+              children: [
+                Text(name,
+                    style:
+                        TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                Text(email),
+                Text(phone),
+                Divider(),
+                Text("Education",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(education),
+                Divider(),
+                Text("Skills",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(skills),
+                Divider(),
+                Text("Experience",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(experience),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
